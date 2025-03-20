@@ -151,11 +151,12 @@ const Login = ({ ChineseRedirectUrl }: { ChineseRedirectUrl: string }) => {
         userSelect={'none'}
         h={'100%'}
       >
-        {isPc && (
-          <Box position={'absolute'} top={'24px'} right={'50px'}>
-            <I18nLngSelector />
-          </Box>
-        )}
+        {/*多语言模块*/}
+        {/*{isPc && (*/}
+        {/*  <Box position={'absolute'} top={'24px'} right={'50px'}>*/}
+        {/*    <I18nLngSelector />*/}
+        {/*  </Box>*/}
+        {/*)}*/}
         <Flex
           flexDirection={'column'}
           w={['100%', '556px']}
@@ -186,9 +187,10 @@ const Login = ({ ChineseRedirectUrl }: { ChineseRedirectUrl: string }) => {
               fontWeight={'medium'}
               cursor={'pointer'}
               textAlign={'center'}
-              onClick={onOpen}
+              // onClick={onOpen}
             >
-              {t('common:support.user.login.can_not_login')}
+              三峡科学技术研究院 · 信息技术研究中心
+              {/*{t('common:support.user.login.can_not_login')}*/}
             </Box>
           )}
         </Flex>

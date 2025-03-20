@@ -179,7 +179,8 @@ const FormLayout = ({ children, setPageType, pageType }: Props) => {
             <MyImage src={LOGO_ICON} w={['22.5px', '36px']} alt={'icon'} />
           </Flex>
           <Box ml={[3, 5]} fontSize={['lg', 'xl']} fontWeight={'bold'} color={'myGray.900'}>
-            {feConfigs?.systemTitle}
+            {/*{feConfigs?.systemTitle}*/}
+            三峡科研院智能助手
           </Box>
         </Flex>
         {!isPc && <I18nLngSelector />}

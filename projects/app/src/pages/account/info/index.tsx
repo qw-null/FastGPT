@@ -602,25 +602,25 @@ const Other = ({ onOpenContact }: { onOpenContact: () => void }) => {
   return (
     <Box>
       <Grid gridGap={4} mt={3}>
-        {feConfigs?.docUrl && (
-          <Link
-            href={getDocPath('/docs/intro')}
-            target="_blank"
-            textDecoration={'none !important'}
-            {...ButtonStyles}
-          >
-            <MyIcon name={'common/courseLight'} w={'18px'} color={'myGray.600'} />
-            <Box ml={2} flex={1}>
-              {t('account_info:help_document')}
-            </Box>
-          </Link>
-        )}
+        {/*{feConfigs?.docUrl && (*/}
+        {/*  <Link*/}
+        {/*    href={getDocPath('/docs/intro')}*/}
+        {/*    target="_blank"*/}
+        {/*    textDecoration={'none !important'}*/}
+        {/*    {...ButtonStyles}*/}
+        {/*  >*/}
+        {/*    <MyIcon name={'common/courseLight'} w={'18px'} color={'myGray.600'} />*/}
+        {/*    <Box ml={2} flex={1}>*/}
+        {/*      {t('account_info:help_document')}*/}
+        {/*    </Box>*/}
+        {/*  </Link>*/}
+        {/*)}*/}
 
         {!isPc &&
           feConfigs?.navbarItems
             ?.filter((item) => item.isActive)
             .map((item) => (
-              <Flex key={item.id} {...ButtonStyles} onClick={() => window.open(item.url, '_blank')}>
+              <Flex key={item.id} {...ButtonStyles}>
                 <Avatar src={item.avatar} w={'18px'} />
                 <Box ml={2} flex={1}>
                   {item.name}
@@ -628,10 +628,11 @@ const Other = ({ onOpenContact }: { onOpenContact: () => void }) => {
               </Flex>
             ))}
         {feConfigs?.concatMd && (
-          <Flex onClick={onOpenContact} {...ButtonStyles}>
+          <Flex {...ButtonStyles}>
             <MyIcon name={'modal/concat'} w={'18px'} color={'myGray.600'} />
             <Box ml={2} flex={1}>
-              {t('account_info:contact_us')}
+              {/*{t('account_info:contact_us')}*/}
+              信息技术研究中心
             </Box>
           </Flex>
         )}

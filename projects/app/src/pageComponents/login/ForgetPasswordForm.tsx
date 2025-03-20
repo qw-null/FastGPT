@@ -86,7 +86,7 @@ const RegisterForm = ({ setPageType, loginSuccess }: Props) => {
   return (
     <>
       <Box fontWeight={'medium'} fontSize={'lg'} textAlign={'center'} color={'myGray.900'}>
-        {t('user:password.retrieved_account', { account: feConfigs?.systemTitle })}
+        {/*{t('user:password.retrieved_account', { account: feConfigs?.systemTitle })}*/}
       </Box>
       <Box
         mt={9}
