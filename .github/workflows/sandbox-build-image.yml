@@ -62,8 +62,6 @@ jobs:
           --push \
           --cache-from=type=local,src=/tmp/.buildx-cache \
           --cache-to=type=local,dest=/tmp/.buildx-cache \
-          -t ${Git_Tag} \
-          -t ${Git_Latest} \
           -t ${Docker_Hub_Tag} \
           -t ${Docker_Hub_Latest} \
           .
