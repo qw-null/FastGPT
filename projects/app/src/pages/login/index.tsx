@@ -146,7 +146,7 @@ const Login = ({ ChineseRedirectUrl }: { ChineseRedirectUrl: string }) => {
       <Flex
         alignItems={'center'}
         justifyContent={'center'}
-        bg={`url(${getWebReqUrl('/icon/login-bg.svg')}) no-repeat`}
+        bg={`url(${getWebReqUrl('/icon/bg.png')}) no-repeat`}
         backgroundSize={'cover'}
         userSelect={'none'}
         h={'100%'}
@@ -187,7 +187,6 @@ const Login = ({ ChineseRedirectUrl }: { ChineseRedirectUrl: string }) => {
               fontWeight={'medium'}
               cursor={'pointer'}
               textAlign={'center'}
-              // onClick={onOpen}
             >
               三峡科学技术研究院 · 信息技术研究中心
               {/*{t('common:support.user.login.can_not_login')}*/}
