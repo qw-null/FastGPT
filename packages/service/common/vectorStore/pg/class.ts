@@ -187,13 +187,12 @@ export class PgVectorCtrl {
     try {
       const results: any = await PgClient.query(
         `BEGIN;
-          SET LOCAL hnsw.ef_search = ${global.systemEnv?.pgHNSWEfSearch || 100};
+          SET LOCAL hnsw.ef_search = ${global.systemEnv?.hnswEfSearch || 100};
           SET LOCAL hnsw.iterative_scan = relaxed_order;
           WITH relaxed_results AS MATERIALIZED (
             select id, collection_id, vector <#> '[${vector}]' AS score
               from ${DatasetVectorTableName}
-              where team_id='${teamId}'
-                AND dataset_id IN (${datasetIds.map((id) => `'${String(id)}'`).join(',')})
+              where dataset_id IN (${datasetIds.map((id) => `'${String(id)}'`).join(',')})
                 ${filterCollectionIdSql}
                 ${forbidCollectionSql}
               order by score limit ${limit}
@@ -201,6 +200,12 @@ export class PgVectorCtrl {
         COMMIT;`
       );
       const rows = results?.[3]?.rows as PgSearchRawType[];
+
+      if (!Array.isArray(rows)) {
+        return {
+          results: []
+        };
+      }
 
       return {
         results: rows.map((item) => ({

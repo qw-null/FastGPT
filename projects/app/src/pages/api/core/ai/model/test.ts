@@ -35,11 +35,17 @@ async function handler(
 
   if (!modelData) return Promise.reject('Model not found');
 
+  if (channelId) {
+    delete modelData.requestUrl;
+    delete modelData.requestAuth;
+  }
+
   const headers: Record<string, string> = channelId
     ? {
         'Aiproxy-Channel': String(channelId)
       }
     : {};
+  addLog.debug(`Test model`, modelData);
 
   if (modelData.type === 'llm') {
     return testLLMModel(modelData, headers);
@@ -63,10 +69,6 @@ async function handler(
 export default NextAPI(handler);
 
 const testLLMModel = async (model: LLMModelItemType, headers: Record<string, string>) => {
-  const ai = getAIApi({
-    timeout: 10000
-  });
-
   const requestBody = llmCompletionsBodyFormat(
     {
       model: model.model,
@@ -75,7 +77,9 @@ const testLLMModel = async (model: LLMModelItemType, headers: Record<string, str
     },
     model
   );
+
   const { response, isStreamResponse } = await createChatCompletion({
+    modelData: model,
     body: requestBody,
     options: {
       headers: {
@@ -144,7 +148,7 @@ const testTTSModel = async (model: TTSModelType, headers: Record<string, string>
 const testSTTModel = async (model: STTModelType, headers: Record<string, string>) => {
   const path = isProduction ? '/app/data/test.mp3' : 'data/test.mp3';
   const { text } = await aiTranscriptions({
-    model: model.model,
+    model,
     fileStream: fs.createReadStream(path),
     headers
   });

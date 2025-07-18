@@ -21,15 +21,33 @@ import {
   llmCompletionsBodyFormat,
   llmStreamResponseToAnswerText
 } from '@fastgpt/service/core/ai/utils';
+import { LLMModelItemType } from '@fastgpt/global/core/ai/model.d';
+import {
+  chunkAutoChunkSize,
+  getLLMMaxChunkSize
+} from '@fastgpt/global/core/dataset/training/utils';
+import { getErrText } from '@fastgpt/global/common/error/utils';
 
 const reduceQueue = () => {
   global.qaQueueLen = global.qaQueueLen > 0 ? global.qaQueueLen - 1 : 0;
 
   return global.qaQueueLen === 0;
 };
+const reduceQueueAndReturn = (delay = 0) => {
+  reduceQueue();
+  if (delay) {
+    setTimeout(() => {
+      generateQA();
+    }, delay);
+  } else {
+    generateQA();
+  }
+};
 
 export async function generateQA(): Promise<any> {
   const max = global.systemEnv?.qaMaxProcess || 10;
+  addLog.debug(`[QA Queue] Queue size: ${global.qaQueueLen}`);
+
   if (global.qaQueueLen >= max) return;
   global.qaQueueLen++;
 
@@ -45,7 +63,7 @@ export async function generateQA(): Promise<any> {
       const data = await MongoDatasetTraining.findOneAndUpdate(
         {
           mode: TrainingModeEnum.qa,
-          retryCount: { $gte: 0 },
+          retryCount: { $gt: 0 },
           lockTime: { $lte: addMinutes(new Date(), -10) }
         },
         {
@@ -92,14 +110,12 @@ export async function generateQA(): Promise<any> {
     return;
   }
   if (error) {
-    reduceQueue();
-    return generateQA();
+    return reduceQueueAndReturn();
   }
 
   // auth balance
   if (!(await checkTeamAiPointsAndLock(data.teamId))) {
-    reduceQueue();
-    return generateQA();
+    return reduceQueueAndReturn();
   }
   addLog.info(`[QA Queue] Start`);
 
@@ -129,16 +145,10 @@ ${replaceVariable(Prompt_AgentQA.fixedText, { text })}`;
     });
     const answer = await llmStreamResponseToAnswerText(chatResponse);
 
-    const qaArr = formatSplitText(answer, text); // 格式化后的QA对
-
-    addLog.info(`[QA Queue] Finish`, {
-      time: Date.now() - startTime,
-      splitLength: qaArr.length,
-      usage: chatResponse.usage
-    });
+    const qaArr = formatSplitText({ answer, rawText: text, llmModel: modelData }); // 格式化后的QA对
 
     // get vector and insert
-    const { insertLen } = await pushDataListToTrainingQueueByCollectionId({
+    await pushDataListToTrainingQueueByCollectionId({
       teamId: data.teamId,
       tmbId: data.tmbId,
       collectionId: data.collectionId,
@@ -154,36 +164,51 @@ ${replaceVariable(Prompt_AgentQA.fixedText, { text })}`;
     await MongoDatasetTraining.findByIdAndDelete(data._id);
 
     // add bill
-    if (insertLen > 0) {
-      pushQAUsage({
-        teamId: data.teamId,
-        tmbId: data.tmbId,
-        inputTokens: await countGptMessagesTokens(messages),
-        outputTokens: await countPromptTokens(answer),
-        billId: data.billId,
-        model: modelData.model
-      });
-    } else {
-      addLog.info(`QA result 0:`, { answer });
-    }
+    pushQAUsage({
+      teamId: data.teamId,
+      tmbId: data.tmbId,
+      inputTokens: await countGptMessagesTokens(messages),
+      outputTokens: await countPromptTokens(answer),
+      billId: data.billId,
+      model: modelData.model
+    });
+    addLog.info(`[QA Queue] Finish`, {
+      time: Date.now() - startTime,
+      splitLength: qaArr.length,
+      usage: chatResponse.usage
+    });
 
-    reduceQueue();
-    generateQA();
+    return reduceQueueAndReturn();
   } catch (err: any) {
     addLog.error(`[QA Queue] Error`, err);
-    reduceQueue();
+    await MongoDatasetTraining.updateOne(
+      {
+        teamId: data.teamId,
+        datasetId: data.datasetId,
+        _id: data._id
+      },
+      {
+        errorMsg: getErrText(err, 'unknown error')
+      }
+    );
 
-    setTimeout(() => {
-      generateQA();
-    }, 1000);
+    return reduceQueueAndReturn(1000);
   }
 }
 
 // Format qa answer
-function formatSplitText(text: string, rawText: string) {
-  text = text.replace(/\\n/g, '\n'); // 将换行符替换为空格
+function formatSplitText({
+  answer,
+  rawText,
+  llmModel
+}: {
+  answer: string;
+  rawText: string;
+  llmModel: LLMModelItemType;
+}) {
+  answer = answer.replace(/\\n/g, '\n'); // 将换行符替换为空格
   const regex = /Q\d+:(\s*)(.*)(\s*)A\d+:(\s*)([\s\S]*?)(?=Q\d|$)/g; // 匹配Q和A的正则表达式
-  const matches = text.matchAll(regex); // 获取所有匹配到的结果
+  const matches = answer.matchAll(regex); // 获取所有匹配到的结果
 
   const result: PushDatasetDataChunkProps[] = []; // 存储最终的结果
   for (const match of matches) {
@@ -199,7 +224,11 @@ function formatSplitText(text: string, rawText: string) {
 
   // empty result. direct split chunk
   if (result.length === 0) {
-    const { chunks } = splitText2Chunks({ text: rawText, chunkLen: 512 });
+    const { chunks } = splitText2Chunks({
+      text: rawText,
+      chunkSize: chunkAutoChunkSize,
+      maxSize: getLLMMaxChunkSize(llmModel)
+    });
     chunks.forEach((chunk) => {
       result.push({
         q: chunk,

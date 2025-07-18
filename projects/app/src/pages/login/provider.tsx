@@ -19,24 +19,26 @@ const provider = () => {
   const { initd, loginStore, setLoginStore } = useSystemStore();
   const { setUserInfo } = useUserStore();
   const router = useRouter();
-  const { code, state, error } = router.query as { code: string; state: string; error?: string };
+  const { state, error, ...props } = router.query as Record<string, string>;
   const { toast } = useToast();
 
   const loginSuccess = useCallback(
     (res: ResLogin) => {
       setUserInfo(res.user);
 
-      router.push(loginStore?.lastRoute ? decodeURIComponent(loginStore?.lastRoute) : '/app/list');
+      router.push(
+        loginStore?.lastRoute ? decodeURIComponent(loginStore?.lastRoute) : '/dashboard/apps'
+      );
     },
     [setUserInfo, router, loginStore?.lastRoute]
   );
 
-  const authCode = useCallback(
-    async (code: string) => {
+  const authProps = useCallback(
+    async (props: Record<string, string>) => {
       try {
         const res = await oauthLogin({
           type: loginStore?.provider || OAuthEnum.sso,
-          code,
+          props,
           callbackUrl: `${location.origin}/login/provider`,
           inviterId: localStorage.getItem('inviterId') || undefined,
           bd_vid: sessionStorage.getItem('bd_vid') || undefined,
@@ -86,8 +88,8 @@ const provider = () => {
       return;
     }
 
-    console.log('SSO', { initd, loginStore, code, state });
-    if (!code || !initd) return;
+    console.log('SSO', { initd, loginStore, props, state });
+    if (!props || !initd) return;
 
     if (isOauthLogging) return;
 
@@ -95,7 +97,7 @@ const provider = () => {
 
     (async () => {
       await clearToken();
-      router.prefetch('/app/list');
+      router.prefetch('/dashboard/apps');
 
       if (loginStore && loginStore.provider !== 'sso' && state !== loginStore.state) {
         toast({
@@ -107,10 +109,10 @@ const provider = () => {
         }, 1000);
         return;
       } else {
-        authCode(code);
+        authProps(props);
       }
     })();
-  }, [initd, authCode, code, error, loginStore, loginStore?.state, router, state, t, toast]);
+  }, [initd, authProps, error, loginStore, loginStore?.state, router, state, t, toast, props]);
 
   return <Loading />;
 };
