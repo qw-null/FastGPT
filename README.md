@@ -109,5 +109,5 @@ git push origin :<remote_branch_name>
 ## 📚 切换代码到固定的tag
 ```git
 git tag #显示tag列表
-
+git checkout <tag_name> #跳转到指定tag
 ```
