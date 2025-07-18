@@ -88,3 +88,26 @@ git rebase upstream/main
    GitHub 会在 Fork 的仓库页面提示原仓库有更新，点击 ```Fetch upstream``` 可直接同步。
 
 通过以上步骤，你可以在保留自定义修改的同时，持续获取原仓库的更新。
+
+## 📚 本地创建分支并推送到github上
+```git
+# 1.检查代码状态（及时提交保存提交）
+git status
+
+# 2.创建分支
+git checkout -b <branch_name>
+
+# 3.推送分支到远程
+git push origin <branch_name>:<remote_branch_name>
+
+# 4.删除分支
+git push origin --delete <remote_branch_name>
+或者 推送一个空分支到远程分支，相当于删除
+git push origin :<remote_branch_name>
+```
+
+## 📚 切换代码到固定的tag
+```git
+git tag #显示tag列表
+
+```
